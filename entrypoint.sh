@@ -2,38 +2,40 @@
 
 set -eux
 
-if [ -z "${CMD_PATH+x}" ]; then
-  echo "::warning file=entrypoint.sh,line=6,col=1::CMD_PATH not set"
-  export CMD_PATH=""
+PROJECT_ROOT="/go/src/github.com/${GITHUB_REPOSITORY}"
+EXT=''
+
+if [ $GOOS == 'windows' ]; then
+  EXT='.exe'
 fi
 
-FILE_LIST=`/build.sh`
-
-#echo "::warning file=/build.sh,line=1,col=5::${FILE_LIST}"
-
-EVENT_DATA=$(cat $GITHUB_EVENT_PATH)
-echo $EVENT_DATA | jq .
 UPLOAD_URL=$(echo $EVENT_DATA | jq -r .release.upload_url)
 UPLOAD_URL=${UPLOAD_URL/\{?name,label\}/}
+
 RELEASE_NAME=$(echo $EVENT_DATA | jq -r .release.tag_name)
 PROJECT_NAME=$(basename $GITHUB_REPOSITORY)
 NAME="${NAME:-${PROJECT_NAME}_${RELEASE_NAME}}_${GOOS}_${GOARCH}"
 
-if [ -z "${EXTRA_FILES+x}" ]; then
-echo "::warning file=entrypoint.sh,line=22,col=1::EXTRA_FILES not set"
-fi
-
-FILE_LIST="${FILE_LIST} ${EXTRA_FILES}"
-
+FILE_LIST="${PROJECT_NAME}${EXT} ${EXTRA_FILES}"
 FILE_LIST=`echo "${FILE_LIST}" | awk '{$1=$1};1'`
 
 
+mkdir -p $(dirname ${PROJECT_ROOT})
+ln -s "${GITHUB_WORKSPACE}" "${PROJECT_ROOT}"
+cd "$PROJECT_ROOT"
+
+go get -v ./...
+go build -v -a -trimpath -ldflags "-s -w" -o "${PROJECT_NAME}${EXT}"
+
+#EVENT_DATA=$(cat $GITHUB_EVENT_PATH)
+#echo $EVENT_DATA | jq .
+
 if [ $GOOS == 'windows' ]; then
-ARCHIVE=tmp.zip
-zip -9r $ARCHIVE ${FILE_LIST}
+  ARCHIVE=tmp.zip
+  zip -9r $ARCHIVE ${FILE_LIST}
 else
-ARCHIVE=tmp.tgz
-tar cvfz $ARCHIVE ${FILE_LIST}
+  ARCHIVE=tmp.tgz
+  tar cvfz $ARCHIVE ${FILE_LIST}
 fi
 
 CHECKSUM=$(md5sum ${ARCHIVE} | cut -d ' ' -f 1)
