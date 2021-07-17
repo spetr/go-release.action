@@ -12,6 +12,6 @@ LABEL "com.github.actions.color"="orange"
 
 RUN apk add --no-cache curl jq git build-base bash zip
 
-ADD entrypoint.sh build.sh /
+ADD entrypoint.sh /
 
 ENTRYPOINT ["/entrypoint.sh"]
