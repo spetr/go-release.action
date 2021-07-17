@@ -9,6 +9,9 @@ if [ $GOOS == 'windows' ]; then
   EXT='.exe'
 fi
 
+EVENT_DATA=$(cat $GITHUB_EVENT_PATH)
+#echo $EVENT_DATA | jq .
+
 UPLOAD_URL=$(echo $EVENT_DATA | jq -r .release.upload_url)
 UPLOAD_URL=${UPLOAD_URL/\{?name,label\}/}
 
@@ -26,9 +29,6 @@ cd "$PROJECT_ROOT"
 
 go get -v ./...
 go build -v -a -trimpath -ldflags "-s -w" -o "${PROJECT_NAME}${EXT}"
-
-#EVENT_DATA=$(cat $GITHUB_EVENT_PATH)
-#echo $EVENT_DATA | jq .
 
 if [ $GOOS == 'windows' ]; then
   ARCHIVE=tmp.zip
