@@ -28,7 +28,11 @@ ln -s "${GITHUB_WORKSPACE}" "${PROJECT_ROOT}"
 cd "$PROJECT_ROOT"
 
 go get -v ./...
-go build -v -a -trimpath -ldflags "-s -w" -o "${PROJECT_NAME}${EXT}"
+if [ $GOOS == 'windows' ]; then
+  go build -v -a -trimpath -ldflags '-s -w' -o "${PROJECT_NAME}${EXT}"
+else
+  go build -v -a -trimpath -ldflags '-s -w -linkmode external -extldflags "-fno-PIC -static"' -o "${PROJECT_NAME}${EXT}"
+fi
 
 if [ $GOOS == 'windows' ]; then
   ARCHIVE=tmp.zip
