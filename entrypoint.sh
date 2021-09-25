@@ -28,10 +28,10 @@ ln -s "${GITHUB_WORKSPACE}" "${PROJECT_ROOT}"
 cd "$PROJECT_ROOT"
 
 go get -v ./...
-if [ $GOOS == 'windows' ]; then
-  go build -v -a -trimpath -ldflags '-s -w' -o "${PROJECT_NAME}${EXT}"
+if [ $GOOS == 'linux' ]; then
+  go build -v -a -trimpath -ldflags '-s -w -linkmode external -extldflags "-fno-PIC -static"' -o "${PROJECT_NAME}"
 else
-  go build -v -a -trimpath -ldflags '-s -w -linkmode external -extldflags "-fno-PIC -static"' -o "${PROJECT_NAME}${EXT}"
+  go build -v -a -trimpath -ldflags '-s -w' -o "${PROJECT_NAME}${EXT}"
 fi
 
 if [ $GOOS == 'windows' ]; then
